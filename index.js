@@ -65,7 +65,7 @@ async function run() {
 
         //! API's
 
-        
+
         //jwt related api
         app.post('/jwt', async (req, res) => {
             const user = req.body;
@@ -73,7 +73,21 @@ async function run() {
             res.send({ token });
         })
 
-        app.get('/users',async(req,res)=>{
+        // post user if not existing user
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const emailQuery = { email: user.email };
+            const existingUser = await userCollection.findOne(emailQuery);
+            if (!existingUser) {
+                res.status(403).send({ message: 'User already Exists' })
+            }
+            const result = await userCollection.insertOne(user);
+            res.send({ result })
+
+        })
+
+        // get all users
+        app.get('/users', async (req, res) => {
             res.send(await userCollection.find(req.body).toArray())
         })
 
