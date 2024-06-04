@@ -62,6 +62,7 @@ async function run() {
         //   await client.connect();
 
         const userCollection = client.db("ResidenceProDB").collection("users");
+        const roomCollection = client.db("ResidenceProDB").collection("rooms");
 
         //! API's
 
@@ -89,6 +90,11 @@ async function run() {
         // get all users
         app.get('/users', async (req, res) => {
             res.send(await userCollection.find(req.body).toArray())
+        })
+
+        // get all rooms
+        app.get('/rooms', async (req, res) => {
+            res.send(await roomCollection.find(req.body).toArray())
         })
 
 
