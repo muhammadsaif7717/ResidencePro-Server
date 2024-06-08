@@ -62,12 +62,23 @@ const client = new MongoClient(uri, {
 let userCollection;
 let roomCollection;
 let agreementCollection;
+let announcementCollection;
 async function run() {
     try {
         userCollection = client.db("ResidenceProDB").collection("users");
         roomCollection = client.db("ResidenceProDB").collection("rooms");
         agreementCollection = client.db("ResidenceProDB").collection("agreements");
+        announcementCollection = client.db("ResidenceProDB").collection("announcements");
 
+
+        //post announcement
+        app.post('/announcements', async (req, res) => {
+            res.send(await announcementCollection.insertOne(req.body));
+        });
+        //get announcement
+        app.get('/announcements', async (req, res) => {
+            res.send(await announcementCollection.find(req.body).toArray());
+        });
 
         //post agreement
         app.post('/agreements', async (req, res) => {
