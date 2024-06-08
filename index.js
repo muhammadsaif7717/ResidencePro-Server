@@ -81,6 +81,8 @@ async function run() {
 
         // accept agreement
         app.put('/agreements/:id/accept', async (req, res) => {
+            const userAgreement = req.body;
+            const { floorNo, blockName, apartmentNo, rent, acceptDate } = userAgreement;
             const id = req.params.id;
             // Update the status of the agreement to 'checked'
             const result = await agreementCollection.updateOne(
@@ -101,7 +103,13 @@ async function run() {
                             {
                                 $set: {
                                     role: 'member',
-                                    acceptDate: new Date(),
+                                    agreement: {
+                                        floorNo: floorNo,
+                                        blockName: blockName,
+                                        apartmentNo: apartmentNo,
+                                        rent: rent,
+                                        acceptDate: acceptDate,
+                                    }
                                 }
                             }
                         );
@@ -193,7 +201,7 @@ async function run() {
                         {
                             $set: {
                                 role: 'user',
-                                acceptDate: '',
+                                agreement: '',
                             }
                         }
                     );
