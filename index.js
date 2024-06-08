@@ -98,7 +98,12 @@ async function run() {
                         // Update the user's role to 'member' if they are not an admin
                         await userCollection.updateOne(
                             { email: agreement.userEmail },
-                            { $set: { role: 'member' } }
+                            {
+                                $set: {
+                                    role: 'member',
+                                    acceptDate: new Date(),
+                                }
+                            }
                         );
                     }
                     // Delete the agreement from the agreementCollection
@@ -185,7 +190,12 @@ async function run() {
                     // Update the user's role to 'user'
                     const result = await userCollection.updateOne(
                         { email: email },
-                        { $set: { role: 'user' } }
+                        {
+                            $set: {
+                                role: 'user',
+                                acceptDate: '',
+                            }
+                        }
                     );
 
                     if (result.modifiedCount > 0) {
