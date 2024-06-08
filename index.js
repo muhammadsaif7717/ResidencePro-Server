@@ -61,10 +61,75 @@ const client = new MongoClient(uri, {
 
 let userCollection;
 let roomCollection;
+let agreementCollection;
 async function run() {
     try {
         userCollection = client.db("ResidenceProDB").collection("users");
         roomCollection = client.db("ResidenceProDB").collection("rooms");
+        agreementCollection = client.db("ResidenceProDB").collection("agreements");
+
+
+        //post agreement
+        app.post('/agreements', async (req, res) => {
+            res.send(await agreementCollection.insertOne(req.body));
+        });
+
+        //get agreements
+        app.get('/agreements', async (req, res) => {
+            res.send(await agreementCollection.find(req.body).toArray());
+        })
+
+        // accept agreement
+        app.put('/agreements/:id/accept', async (req, res) => {
+            const id = req.params.id;
+            // Update the status of the agreement to 'checked'
+            const result = await agreementCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $set: { status: 'checked' } }
+            );
+
+            if (result.modifiedCount > 0) {
+                // Find the updated agreement
+                const agreement = await agreementCollection.findOne({ _id: new ObjectId(id) });
+                if (agreement) {
+                    // Check the user's current role
+                    const user = await userCollection.findOne({ email: agreement.userEmail });
+                    if (user && user.role !== 'admin') {
+                        // Update the user's role to 'member' if they are not an admin
+                        await userCollection.updateOne(
+                            { email: agreement.userEmail },
+                            { $set: { role: 'member' } }
+                        );
+                    }
+                    // Delete the agreement from the agreementCollection
+                    await agreementCollection.deleteOne({ _id: new ObjectId(id) });
+                }
+                res.send({ success: true });
+            }
+        });
+
+        // reject agreement
+        app.put('/agreements/:id/reject', async (req, res) => {
+            const id = req.params.id;
+            // Update the status of the agreement to 'checked'
+            const result = await agreementCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $set: { status: 'checked' } }
+            );
+
+            if (result.modifiedCount > 0) {
+                // Find the updated agreement
+                const agreement = await agreementCollection.findOne({ _id: new ObjectId(id) });
+                if (agreement) {
+                    // Delete the agreement from the agreementCollection
+                    await agreementCollection.deleteOne({ _id: new ObjectId(id) });
+                }
+                res.send({ success: true });
+            }
+        });
+
+
+
 
         // AUTH related API
         app.post('/jwt', async (req, res) => {
@@ -107,8 +172,64 @@ async function run() {
             res.send(await userCollection.find(req.body).toArray());
         });
 
+
+        // Demote a user's role to 'user' by email
+        app.put('/users/:email/demote', verifyToken, verifyAdmin, async (req, res) => {
+            const email = req.params.email;
+            // Find the user by email
+            const user = await userCollection.findOne({ email: email });
+
+            if (user) {
+                // Check if the user is not an admin
+                if (user.role !== 'admin') {
+                    // Update the user's role to 'user'
+                    const result = await userCollection.updateOne(
+                        { email: email },
+                        { $set: { role: 'user' } }
+                    );
+
+                    if (result.modifiedCount > 0) {
+                        res.send({ success: true, message: 'User role updated to user' });
+                    }
+                }
+            }
+        });
+
+
+
+        // check if user is a admin
+        app.get('/users/admin/:email', verifyToken, async (req, res) => {
+            const email = req.params.email;
+            if (email !== req.user.email) {
+                return res.status(403).send({ message: 'Forbidden access' });
+            }
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            let admin = false;
+            if (user) {
+                admin = user?.role === 'admin';
+            }
+            res.send({ admin });
+        });
+
+        // check if user is a member
+        app.get('/users/member/:email', verifyToken, async (req, res) => {
+            const email = req.params.email;
+            if (email !== req.user.email) {
+                return res.status(403).send({ message: 'Forbidden access' });
+            }
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            let member = false;
+            if (user) {
+                member = user?.role === 'member';
+            }
+            res.send({ member });
+        });
+
+
         // get all rooms
-        app.get('/rooms', logger, verifyToken, async (req, res) => {
+        app.get('/rooms', logger, async (req, res) => {
             // console.log('user in the valid token', req.user);
             // if (req.query.email !== req.user.email) {
             //     return res.status(403).send({ message: 'forbidden access' });
@@ -119,6 +240,14 @@ async function run() {
             // }
             res.send(await roomCollection.find(req.body).toArray());
         });
+
+
+
+
+
+
+
+
 
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
