@@ -10,7 +10,7 @@ const port = process.env.PORT || 5000;
 
 // middlewares
 app.use(cors({
-    origin: ['http://localhost:5173','https://residencepro-7717.web.app','https://residencepro-7717.firebaseapp.com'],
+    origin: ['http://localhost:5173', 'https://residencepro-7717.web.app', 'https://residencepro-7717.firebaseapp.com'],
     credentials: true,
 }));
 app.use(express.json());
@@ -64,6 +64,7 @@ let roomCollection;
 let agreementCollection;
 let announcementCollection;
 let couponCollection;
+let paymentsCollection;
 async function run() {
     try {
         userCollection = client.db("ResidenceProDB").collection("users");
@@ -71,7 +72,17 @@ async function run() {
         agreementCollection = client.db("ResidenceProDB").collection("agreements");
         announcementCollection = client.db("ResidenceProDB").collection("announcements");
         couponCollection = client.db("ResidenceProDB").collection("coupons");
+        paymentsCollection = client.db("ResidenceProDB").collection("payments");
 
+
+        //post payment
+        app.post('/payments', async (req, res) => {
+            res.send(await paymentsCollection.insertOne(req.body));
+        });
+        //get payment
+        app.get('/payments', async (req, res) => {
+            res.send(await paymentsCollection.find(req.body).toArray());
+        });
 
         //post cupon
         app.post('/coupons', async (req, res) => {
