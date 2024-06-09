@@ -63,13 +63,24 @@ let userCollection;
 let roomCollection;
 let agreementCollection;
 let announcementCollection;
+let couponCollection;
 async function run() {
     try {
         userCollection = client.db("ResidenceProDB").collection("users");
         roomCollection = client.db("ResidenceProDB").collection("rooms");
         agreementCollection = client.db("ResidenceProDB").collection("agreements");
         announcementCollection = client.db("ResidenceProDB").collection("announcements");
+        couponCollection = client.db("ResidenceProDB").collection("coupons");
 
+
+        //post cupon
+        app.post('/coupons', async (req, res) => {
+            res.send(await couponCollection.insertOne(req.body));
+        });
+        //get cupon
+        app.get('/coupons', async (req, res) => {
+            res.send(await couponCollection.find(req.body).toArray());
+        });
 
         //post announcement
         app.post('/announcements', async (req, res) => {
