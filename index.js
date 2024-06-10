@@ -299,8 +299,6 @@ async function run() {
             }
         });
 
-
-
         // check if user is a admin
         app.get('/users/admin/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
