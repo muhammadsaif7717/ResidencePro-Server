@@ -75,6 +75,45 @@ async function run() {
         paymentsCollection = client.db("ResidenceProDB").collection("payments");
 
 
+
+
+        // Get total number of rooms
+        app.get('/stats/rooms/count', async (req, res) => {
+            const totalRooms = await roomCollection.countDocuments();
+            res.send({ totalRooms });
+        });
+
+        // Get available rooms percentage
+        app.get('/stats/rooms/available-percentage', async (req, res) => {
+            const totalRooms = await roomCollection.countDocuments();
+            const availableRooms = await roomCollection.countDocuments({ status: 'available' });
+            const availablePercentage = (availableRooms / totalRooms) * 100;
+            res.send({ availablePercentage });
+        });
+
+        // Get unavailable rooms (agreement) percentage
+        app.get('/stats/rooms/unavailable-percentage', async (req, res) => {
+            const totalRooms = await roomCollection.countDocuments();
+            const unavailableRooms = await roomCollection.countDocuments({ status: 'unavailable' });
+            const unavailablePercentage = (unavailableRooms / totalRooms) * 100;
+            res.send({ unavailablePercentage });
+        });
+
+        // Get number of users
+        app.get('/stats/users/count', async (req, res) => {
+            const totalUsers = await userCollection.countDocuments();
+            res.send({ totalUsers });
+        });
+
+        // Get number of members
+        app.get('/stats/members/count', async (req, res) => {
+            const totalMembers = await userCollection.countDocuments({ role: 'member' });
+            res.send({ totalMembers });
+        });
+
+
+
+
         //post payment
         app.post('/payments', async (req, res) => {
             res.send(await paymentsCollection.insertOne(req.body));
@@ -113,6 +152,7 @@ async function run() {
         })
 
         // accept agreement
+        // accept agreement
         app.put('/agreements/:id/accept', async (req, res) => {
             const userAgreement = req.body;
             const { floorNo, blockName, apartmentNo, rent, acceptDate } = userAgreement;
@@ -145,14 +185,20 @@ async function run() {
                                     }
                                 }
                             }
-                        );
+                        )
                     }
                     // Delete the agreement from the agreementCollection
                     await agreementCollection.deleteOne({ _id: new ObjectId(id) });
+                    // update room availability
+                    await roomCollection.updateOne(
+                        { floorNo, blockName, apartmentNo },
+                        { $set: { status: 'unavailable' } }
+                    );
                 }
                 res.send({ success: true });
             }
         });
+
 
         // reject agreement
         app.put('/agreements/:id/reject', async (req, res) => {
@@ -224,6 +270,7 @@ async function run() {
             const email = req.params.email;
             // Find the user by email
             const user = await userCollection.findOne({ email: email });
+            const { floorNo, blockName, apartmentNo } = user.agreement;
 
             if (user) {
                 // Check if the user is not an admin
@@ -238,8 +285,14 @@ async function run() {
                             }
                         }
                     );
+                    // Update the room's status to 'available'
+                    await roomCollection.updateOne(
+                        { floorNo, blockName, apartmentNo },
+                        { $set: { status: 'available' } }
+                    );
 
                     if (result.modifiedCount > 0) {
+
                         res.send({ success: true, message: 'User role updated to user' });
                     }
                 }
