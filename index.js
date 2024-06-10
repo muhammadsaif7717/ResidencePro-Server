@@ -131,6 +131,17 @@ async function run() {
         app.get('/coupons', async (req, res) => {
             res.send(await couponCollection.find(req.body).toArray());
         });
+        //update coupone
+        app.put('/coupons/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const updatedCoupon = {
+                $set: { availability: "unavailable", }
+            }
+            const result = await couponCollection.updateOne(query, updatedCoupon);
+            res.send({ success: true, result })
+        });
+
 
         //post announcement
         app.post('/announcements', async (req, res) => {
