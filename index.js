@@ -10,7 +10,7 @@ const port = process.env.PORT || 5000;
 
 // middlewares
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://residencepro-7717.web.app', 'https://residencepro-7717.firebaseapp.com'],
+    origin: ['http://localhost:5173', 'https://residencepro-7717.web.app', 'https://residencepro-7717.firebaseapp.com', 'https://residence-pro-client.vercel.app'],
     credentials: true,
 }));
 app.use(express.json());
